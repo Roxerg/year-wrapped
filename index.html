@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycling Stats</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script type="text/javascript" src="js/parse_csv.js"></script>
+    <script type="text/javascript" src="js/dot_plot.js"></script>
+    <script type="text/javascript" src="js/bar_plot.js"></script>
+    <script type="text/javascript" src="js/pie_chart.js"></script>
+
+    <style>
+        html * {
+            font-family: Arial !important;
+        }
+
+        svg {
+            background: #f7f7f7;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+
+        div.tooltip {
+            position: absolute;
+            text-align: center;
+            width: 200px;
+            height: 70px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: rgb(131, 147, 219);
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚲 Cycling Stats 🚲</h1>
+    
+    <form id="uploadForm">
+        <input class="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg" type="file" id="fileInput" accept=".csv" required />
+        <button class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium 
+        hover:bg-blue-700 active:bg-blue-800 
+        transition-colors duration-200" type="submit">Upload</button>
+    </form>
+
+    <div id="dotplot"></div>
+    <div id="barplot"></div>
+    <div id="anotherdotplot"></div>
+
+    <input class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium 
+    hover:bg-blue-700 active:bg-blue-800 
+    transition-colors duration-200"
+    id="clickMe" type="button" value="clickme" onclick="aaa.change();" />
+    <div id="piechart"></div>
+
+    <div id="message"></div>
+    <!-- <svg id="myPlot" style="width:1500px;height:1000px"></svg> -->
+
+    <script>
+        var aaa = null
+
+        document.getElementById('uploadForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) {
+                messageDiv.innerHTML = `<p style="color:red;">Please select a CSV file.</p>`;
+                return;
+            }
+
+            parseCSV(file).then(
+                (e) => {
+                    drawDotPlot("#dotplot", e, "distance", "time", [[20, "#9DE41B"], [50, "#DABD25"], [100, "#DD6022"]]);
+                    drawBarPlot("#barplot", e, "elevation_gain", "name", [
+                        [251, "#005EB8", "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Arthur's Seat"],
+                        [974, "#005EB8", "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Ben Lomond"],
+                        [1345, "#005EB8", "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Ben Nevis"]
+                    ])
+
+                    drawAltDotPlot("#anotherdotplot", e, "average_speed", "time")
+                    aaa = drawPieChart("#piechart", e)
+                    aaa._curr_key = "count"
+                    d3.select("#piechart").append(() => aaa)
+                }
+            )          
+            
+        });
+
+
+        
+
+    </script>
+
+
+
+<script>
+</script>
+
+</html>
