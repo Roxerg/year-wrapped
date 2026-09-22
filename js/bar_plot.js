@@ -4,10 +4,10 @@ function drawBarPlot(plot_identifier, in_data, y_val, x_val, mark_lines) {
         return a[y_val] < b[y_val]
     })
     // data.forEach()
-    var data = in_data.slice(0,30).reverse()
+    var data = in_data.slice(0,5).reverse()
 
-    const xSize = 1500;
-    const ySize = 1000;
+    const xSize = 600;
+    const ySize = 500;
     const margin = 40;
     const xMax = xSize - margin*2;
     const yMax = ySize - margin*2;
@@ -24,12 +24,12 @@ function drawBarPlot(plot_identifier, in_data, y_val, x_val, mark_lines) {
     });
 
           // Declare the chart dimensions and margins.
-    const width = 1500;
-    const height = 1000;
-    const marginTop = 30;
-    const marginRight = 0;
-    const marginBottom = 150;
-    const marginLeft = 40;
+    const width = 600;
+    const height = 500;
+    const marginTop = 30;    
+    const marginRight = 30;  
+    const marginBottom = 150; 
+    const marginLeft = 60;   
 
     var labels = []
     data.forEach((e) => labels.push(e.name))
@@ -57,7 +57,7 @@ function drawBarPlot(plot_identifier, in_data, y_val, x_val, mark_lines) {
 
     // Add a rect for each bar.
     svg.append("g")
-        .attr("fill", "orange")
+        .attr("fill", prime_col)
         .selectAll()
         .data(data)
         .join("rect")
@@ -79,7 +79,7 @@ function drawBarPlot(plot_identifier, in_data, y_val, x_val, mark_lines) {
         line_obj.append("line")
             .attr("x1", marginLeft)
             .attr("y1", function (d) {return y(line[0])})
-            .attr("x2", width)
+            .attr("x2", width - marginRight)
             .attr("y2", function (d) {return y(line[0])})
             .attr("stroke-width", 2)
             .attr("stroke", line[1]);
@@ -100,7 +100,7 @@ function drawBarPlot(plot_identifier, in_data, y_val, x_val, mark_lines) {
         .call(g => g.append("text")
             .attr("x", -marginLeft)
             .attr("y", 10)
-            .attr("fill", "currentColor")
+            .attr("fill", sec_col)
             .attr("text-anchor", "start"));
             // .text("↑ Frequency (%)"));
 

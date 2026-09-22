@@ -1,109 +1,128 @@
 function drawPieChart(plot_identifier, in_data) {
-
-    var data = []
-    var bikes = []
-    var curr_key = "count"
+    var data = [];
+    var curr_key = "count";
     const color_map = {
         "other": "grey",
-        "Raleigh Veloce": "#9e67f0",
-        "CDA" : "#78967e",
-        "Santander Bike": "red"
-    }
+        "Raleigh Veloce": prime_col,
+        "CDA" : sec_col,
+        "Santander Bike": third_col
+    };
 
-
-    var counters = {}
-
+    var counters = {};
     in_data.forEach((e) => {
-        if (e.bike == "") {e.bike = "other"}
+        if (e.bike == "") { e.bike = "other"; }
         if (!(e.bike in counters)) {
-            counters[e.bike] = {
-                "count" : 0,
-                "distance": 0,
-            }
+            counters[e.bike] = { "count": 0, "distance": 0 };
         }
-        counters[e.bike]["count"] += 1
-        counters[e.bike]["distance"] += e.distance
-    })
+        counters[e.bike]["count"] += 1;
+        counters[e.bike]["distance"] += e.distance;
+    });
 
     Object.entries(counters).forEach(([k, bike]) => {
         data.push({
-            "count" : bike["count"],
-            "distance" : Math.round(bike["distance"]),
+            "count": bike["count"],
+            "distance": Math.round(bike["distance"]),
+            "distance_unit": "km",
+            "count_unit": "rides",
             "name": k,
-            "color": color_map[k]
-        })
-    })
+            "color": color_map[k] || "grey"
+        });
+    });
 
-
-
-    const width = 1000;
-    const height = Math.min(500, width / 2);
-    const outerRadius = height / 2 - 10;
-    const innerRadius = outerRadius * 0.75;
-    const tau = 2 * Math.PI;
-    const color = d3.scaleOrdinal(d3.schemeObservable10);
+    const width = 600;
+    const height = 500;
+    const outerRadius = Math.min(width, height) / 2 - 20;
+    const innerRadius = outerRadius * 0.70; // Expanded center hole for legend & button
 
     const svg = d3.create("svg")
-        .attr("viewBox", [-width/2, -height/2, width, height])
-        .attr("width", 1500);
+        .attr("viewBox", [-width / 2, -height / 2, width, height])
+        .attr("width", "100%")
+        .attr("height", "auto");
 
     const arc = d3.arc()
-          .innerRadius(innerRadius)
-          .outerRadius(outerRadius);
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius);
 
     const pie = d3.pie().sort(null).value((d) => d["count"]);
 
-    // color legend
-    const leg = svg.append("g")
-      .selectAll()
-      .data(data)
-      .join("g")
-        .attr("transform", (d, i, nodes) => `translate(-60,${(nodes.length / 2 - i - 1) * 20})`)
-        .call(g => g.append("rect")
-            .attr("width", 18)
-            .attr("height", 18)
-            .attr("fill", (d,i) => data[i]["color"]))
-    
-    leg.call(g => g.append("text")
-            .attr("x", 24)
-            .attr("y", 9)
-            .attr("dy", "0.35em")
-            .text((d, i) => `${data[i]["name"]} (${data[i][curr_key]})`));
-        
+    // Render Pie Arcs
     const path = svg.datum(data).selectAll("path")
-        .data(pie)
-      .join("path")
+        .data(pie(data))
+        .join("path")
         .attr("fill", (d, i) => data[i]["color"])
         .attr("d", arc)
-        .each(function(d) { this._current = d; }); // store the initial angles
+        .each(function(d) { this._current = d; });
+
+    // Center Container
+    const centerGroup = svg.append("g");
+
+    // Center Legend (Stacked vertically in the middle)
+    const rowHeight = 18;
+    const legendYOffset = -((data.length * rowHeight) / 2) - 15; // Shifted up to make room for button
+
+    const leg = centerGroup.append("g")
+        .selectAll("g")
+        .data(data)
+        .join("g")
+        .attr("transform", (d, i) => `translate(0, ${legendYOffset + (i * rowHeight)})`);
+
+    leg.append("rect")
+        .attr("x", -90)
+        .attr("y", -6)
+        .attr("width", 12)
+        .attr("height", 12)
+        .attr("rx", 2)
+        .attr("fill", (d) => d.color);
+
+    const legendText = leg.append("text")
+        .attr("x", -70)
+        .attr("y", 0)
+        .attr("dy", "0.35em")
+        .style("font-size", "1em")
+        .style("font-weight", "500")
+        .attr("fill", "#374151")
+        .text((d) => `${d.name}: ${d[curr_key]} ${d[curr_key+"_unit"]}`);
+
+    // Center Toggle Button (Positioned below legend items)
+    const buttonY = (data.length * rowHeight) / 2 + 10;
+
+    const centerBtn = centerGroup.append("g")
+        .attr("transform", `translate(0, ${buttonY})`)
+        .style("cursor", "pointer")
+        .on("click", change);
+
+    centerBtn.append("rect")
+        .attr("x", -50)
+        .attr("y", -12)
+        .attr("width", 100)
+        .attr("height", 24)
+        .attr("rx", 12)
+        .attr("fill", sec_col);
+
+    const btnText = centerBtn.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "white")
+        .style("font-size", "11px")
+        .style("font-weight", "600")
+        .text("Mode: Count");
 
     function change() {
-        console.log("curr", this._curr_key)
-        var value = "count"
-        if (this._curr_key == "count") {
-            value = "distance"
-            this._curr_key = "distance"
-        } else {
-            value = "count"
-            this._curr_key = "count"
-        }
-        curr_key = this._curr_key
-
-        leg.select("text").data(data).text((d,i) =>`${data[i]["name"]} (${data[i][curr_key]})`)
-        pie.value((d) => d[value]); // change the value function
-        path.data(pie); // compute the new angles
-        path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
+        curr_key = (curr_key === "count") ? "distance" : "count";
+        
+        btnText.text(`Mode: ${curr_key.charAt(0).toUpperCase() + curr_key.slice(1)}`);
+        legendText.text((d) => `${d.name}: ${d[curr_key]} ${d[curr_key+"_unit"]}`);
+        
+        pie.value((d) => d[curr_key]);
+        path.data(pie(data));
+        path.transition().duration(750).attrTween("d", arcTween);
     }
 
-    // Store the displayed angles in _current.
-    // Then, interpolate from _current to the new angles.
-    // During the transition, _current is updated in-place by d3.interpolate.
     function arcTween(a) {
-      const i = d3.interpolate(this._current, a);
-      this._current = i(0);
-      return (t) => arc(i(t));
+        const i = d3.interpolate(this._current, a);
+        this._current = i(0);
+        return (t) => arc(i(t));
     }
 
-    // Return the svg node to be displayed.
-    return Object.assign(svg.node(), {change});
+    return svg.node();
 }

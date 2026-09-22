@@ -8,97 +8,117 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/grid_style.css">
+    <link rel="stylesheet" type="text/css" href="css/hover_style.css">
+
+    <script type="text/javascript" src="js/theme.js"></script>
+    <script type="text/javascript" src="js/grid_plot.js"></script>
     <script type="text/javascript" src="js/parse_csv.js"></script>
     <script type="text/javascript" src="js/dot_plot.js"></script>
     <script type="text/javascript" src="js/bar_plot.js"></script>
     <script type="text/javascript" src="js/pie_chart.js"></script>
 
     <style>
+        /* https://www.figma.com/color-palette-generator/?colors=6165AC-958E1D-CA7277-7B53AC */
         html * {
             font-family: Arial !important;
+        }
+
+        body {
+            margin-left: 10%;
+            margin-right: 10%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                margin-left: 2%;
+                margin-right: 2%;
+            }
+        }
+
+        .stat-container {
+            background: #f7f7f7;
+            border: 1px solid #ccc;
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
         svg {
             background: #f7f7f7;
             border: 1px solid #ccc;
-            margin-top: 20px;
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
-        div.tooltip {
-            position: absolute;
-            text-align: center;
-            width: 200px;
-            height: 70px;
-            padding: 2px;
-            font: 12px sans-serif;
-            background: rgb(131, 147, 219);
-            border: 0px;
-            border-radius: 8px;
-            pointer-events: none;
+        #gridplot {
+            flex-basis: 100%;   /* takes a full line in the wrapping flex row */
+            width: 100%;
         }
+        
     </style>
 </head>
-<body>
-    <h1>🚲 Cycling Stats 🚲</h1>
+<body class="p-6 bg-gray-50">
+    <h1 class="text-3xl font-bold mb-4">🚲 Cycling Stats 🚲</h1>
     
-    <form id="uploadForm">
-        <input class="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg" type="file" id="fileInput" accept=".csv" required />
-        <button class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium 
-        hover:bg-blue-700 active:bg-blue-800 
-        transition-colors duration-200" type="submit">Upload</button>
-    </form>
+    <div class="flex flex-wrap items-center gap-4 mb-6">
+        <form id="uploadForm" class="flex gap-2">
+            <input class="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg bg-white" type="file" id="fileInput" accept=".csv" required />
+            <button class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200" type="submit">Upload</button>
+        </form>
 
-    <div id="dotplot"></div>
-    <div id="barplot"></div>
-    <div id="anotherdotplot"></div>
+        <input class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 cursor-pointer"
+        id="clickMe" type="button" value="Toggle Pie Data" onclick="aaa.change();"/>
+    </div>
 
-    <input class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium 
-    hover:bg-blue-700 active:bg-blue-800 
-    transition-colors duration-200"
-    id="clickMe" type="button" value="clickme" onclick="aaa.change();" />
-    <div id="piechart"></div>
+    <!-- Flexbox Container for Plots -->
+    <div class="flex flex-wrap -mx-3">
+        <div class="w-full lg:w-1/2 px-3 mb-6" id="gridplot"></div>
+        <div class="w-full lg:w-1/2 px-3 mb-6" id="dotplot"></div>
+        <div class="w-full lg:w-1/2 px-3 mb-6" id="barplot"></div>
+        <div class="w-full lg:w-1/2 px-3 mb-6" id="anotherdotplot"></div>
+        <div class="w-full lg:w-1/2 px-3 mb-6" id="piechart"></div>
+    </div>
 
     <div id="message"></div>
-    <!-- <svg id="myPlot" style="width:1500px;height:1000px"></svg> -->
 
     <script>
-        var aaa = null
+        var pie = null
 
         document.getElementById('uploadForm').addEventListener('submit', (e) => {
             e.preventDefault();
 
             const file = document.getElementById('fileInput').files[0];
             if (!file) {
-                messageDiv.innerHTML = `<p style="color:red;">Please select a CSV file.</p>`;
+                document.getElementById('message').innerHTML = `<p style="color:red;">Please select a CSV file.</p>`;
                 return;
             }
 
             parseCSV(file).then(
                 (e) => {
-                    drawDotPlot("#dotplot", e, "distance", "time", [[20, "#9DE41B"], [50, "#DABD25"], [100, "#DD6022"]]);
-                    drawBarPlot("#barplot", e, "elevation_gain", "name", [
-                        [251, "#005EB8", "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Arthur's Seat"],
-                        [974, "#005EB8", "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Ben Lomond"],
-                        [1345, "#005EB8", "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Ben Nevis"]
-                    ])
+                    // Clear previous rendered SVGs before redrawing
+                    d3.select("#gridplot").html("");
+                    d3.select("#dotplot").html("");
+                    d3.select("#barplot").html("");
+                    d3.select("#anotherdotplot").html("");
+                    d3.select("#piechart").html("");
 
-                    drawAltDotPlot("#anotherdotplot", e, "average_speed", "time")
-                    aaa = drawPieChart("#piechart", e)
-                    aaa._curr_key = "count"
-                    d3.select("#piechart").append(() => aaa)
+                    drawDotPlot("#dotplot", e, "distance", "time", [[20, sec_col], [50, sec_col], [100, sec_col]]);
+                    drawBarPlot("#barplot", e, "elevation_gain", "name", [
+                        [251, sec_col, "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Arthur's Seat"],
+                        [1345, sec_col, "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Ben Nevis"]
+                    ]);
+
+                    drawAltDotPlot("#anotherdotplot", e, "average_speed", "time");
+                    pie = drawPieChart("#piechart", e);
+                    pie._curr_key = "count";
+                    d3.select("#piechart").append(() => pie);
+                    drawGridPlot()
                 }
             )          
-            
         });
-
-
-        
-
     </script>
-
-
-
-<script>
-</script>
-
+</body>
 </html>
