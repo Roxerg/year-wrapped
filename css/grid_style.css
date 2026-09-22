@@ -1,0 +1,85 @@
+:root {
+    --cell: 14px;
+    --gap-x: 0.42%;
+    --gap-y: 6px;
+    --filler: rgba(0,0,0,0);
+    --active: var(--third-colour);
+    --active-alt: rgb(107, 243, 198);
+    --inactive: lightgray;
+    --bg: #0d1117;
+    --label-width: 20px;
+  }
+
+  h3 { margin-bottom: 20px; }
+
+  .grid {
+    display: grid;
+    row-gap: var(--gap-y);
+    cursor: pointer;
+  }
+
+  .row-container {
+    display: grid;
+    grid-template-columns: var(--label-width) 1fr;
+    align-items: center;
+    column-gap: 6px;
+    margin-bottom: var(--row-gap, 6px);
+  }
+
+  .label {
+    text-align: right;
+    font-weight: bold;
+    line-height: 1;
+    color: #c9d1d9;
+  }
+
+  .row {
+    display: flex;
+    width: 100%;
+    gap: var(--gap-x);
+    justify-content: flex-start;
+  }
+
+  .cell {
+    box-sizing: border-box;
+    width: calc((100% - 52 * var(--gap-x)) / 53);
+    height: auto;
+    aspect-ratio: 1;
+    background: var(--inactive);
+    border-radius: 0; /* no rounding */
+    flex-shrink: 0;
+    transition:
+      width 0.35s ease,
+      background 0.2s ease,
+      margin 0.35s ease;
+  }
+
+  /* Optional: Highlight cell on hover */
+  .cell:not(.filler):hover {
+    position: relative;
+    border: 1px solid #000;
+    z-index: 1;
+  }
+
+  .cell.active {
+    background: var(--active);
+  }
+
+  .cell.filler {
+    background: var(--filler);
+  }
+
+  /* BAR MODE */
+  .bars .row {
+    gap: 0; /* fuse active cells */
+  }
+
+  .bars .cell {
+    border-radius: 0; /* always square */
+  }
+
+  .bars .cell:not(.active) {
+    width: 0;
+    margin: 0;
+    padding: 0;
+  }
